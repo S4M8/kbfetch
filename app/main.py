@@ -1,22 +1,20 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, UploadFile, File, Body
 from .rag import RAG
+import os
 
 app = FastAPI()
-rag = RAG()
+rag = RAG(qdrant_host=os.environ.get("QDRANT_HOST", "localhost"))
 
-# Example documents to populate the knowledge base
-# In a real application, these would come from a file or database
-rag.add_documents([
-    "The capital of France is Paris.",
-    "The Eiffel Tower is located in Paris.",
-    "The currency of France is the Euro."
-])
+@app.post("/upload")
+async def upload_document(file: UploadFile = File(...)):
+    file_path = f"/tmp/{file.filename}"
+    with open(file_path, "wb") as buffer:
+        buffer.write(await file.read())
+    rag.add_document(file_path)
+    os.remove(file_path)
+    return {"message": "Document uploaded successfully"}
 
-@app.get("/")
-def read_root():
-    return {"Hello": "World"}
-
-@app.get("/query")
-def query(q: str):
+@app.post("/query")
+def query(q: str = Body(...)):
     results = rag.query(q)
     return {"results": results}
