@@ -5,3 +5,6 @@ chromadb
 gunicorn
 qdrant-client
 python-multipart
+beautifulsoup4
+html2text
+tiktoken
