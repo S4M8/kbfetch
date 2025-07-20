@@ -10,9 +10,21 @@ Containerized RAG (Retrieval-Augmented Generation) Knowledge Base.
 *   **Ollama**: A tool for running large language models locally. `Phi-3` is used as the LLM for generating responses.
 *   **Docker & Docker Compose**: Used for containerizing the application components and orchestrating their deployment.
 
-## Installation
+## Getting Started
 
-To set up and run `kbfetch`, you need to have Docker and Docker Compose installed on your system.
+To get started with `kbfetch`, you need to have Docker and Docker Compose installed. The provided `Makefile` simplifies the process of building, running, and managing the application.
+
+### Available `make` Commands
+
+*   `make auto`: Automatically detects if a GPU is available and starts the appropriate services. This is the recommended way to start the application.
+*   `make gpu`: Starts the services with GPU acceleration.
+*   `make cpu`: Starts the services with CPU only.
+*   `make build`: Builds the Docker images.
+*   `make down`: Stops all running services.
+*   `make logs`: Shows the logs for all services.
+*   `make clean`: Stops and removes all containers, networks, and volumes associated with the application.
+
+### Quick Start
 
 1.  **Clone the repository**:
     ```bash
@@ -20,34 +32,24 @@ To set up and run `kbfetch`, you need to have Docker and Docker Compose installe
     cd kbfetch
     ```
 
-2.  **Build the Docker images**:
+2.  **Build and start the services**:
     ```bash
-    docker-compose build
+    make auto
     ```
-
-3.  **Start the services**:
-    ```bash
-    docker-compose up -d
-    ```
-    This will start the `rag_api` (FastAPI application which now includes LLM generation), `vector_db` (Qdrant), and `llm_service` (Ollama) containers.
+    This command will detect if you have a GPU and start the appropriate services. If you want to force CPU or GPU mode, you can use `make cpu` or `make gpu` respectively.
 
 ## Usage
 
 ### Using the kbfetch CLI
 
-A command-line interface (CLI) tool `kbfetch_cli.py` is provided to simplify interaction with the `kbfetch` application.
+A command-line interface (CLI) tool `kbfetch` is provided to simplify interaction with the `kbfetch` application.
 
 #### Uploading Documents
 
 To upload a document, use the `upload` command followed by the path to your document file:
 
 ```bash
-python kbfetch_cli.py upload <path_to_your_document>
-```
-
-Example:
-```bash
-python kbfetch_cli.py upload my_document.md
+kbfetch upload <path_to_your_document>
 ```
 
 #### Querying the Knowledge Base
@@ -55,40 +57,8 @@ python kbfetch_cli.py upload my_document.md
 To query the knowledge base, use the `query` command followed by your query text:
 
 ```bash
-python kbfetch_cli.py query "Your question here"
+kbfetch query "Your question here"
 ```
-
-Example:
-```bash
-python kbfetch_cli.py query "What is kbfetch?"
-```
-
-## Profiling (Initial Version)
-
-The following profiling was conducted on a machine with an Intel i9 CPU, 64GB of RAM, and an NVIDIA 3090 GPU. The `llm_service` was running in CPU mode.
-
-### Resource Usage
-
-| Service         | State  | CPU % (Peak) | Memory Usage (Peak) |
-| --------------- | ------ | ------------ | ------------------- |
-| **rag_api**     | Idle   | 0.41%        | 2.077 GiB           |
-|                 | Upload | 0.43%        | 2.113 GiB           |
-|                 | Query  | 0.40%        | 2.113 GiB           |
-| **vector_db**   | Idle   | 0.24%        | 122.3 MiB           |
-|                 | Upload | 0.38%        | 124.8 MiB           |
-|                 | Query  | 0.25%        | 123.2 MiB           |
-| **llm_service** | Idle   | 0.00%        | 12.94 MiB           |
-|                 | Upload | 0.00%        | 12.94 MiB           |
-|                 | Query  | **~100%**    | **3.998 GiB**       |
-
-### Estimated Minimum Hardware Requirements
-
-*   **RAM:** 8 GB
-*   **CPU:** 4-core
-*   **Storage:** 10 GB
-
-**Note:** The primary bottleneck is the `llm_service` during query operations. Using a supported GPU for the `llm_service` would significantly improve performance and reduce CPU load.
-
 
 ## Planned Features
 
@@ -137,3 +107,29 @@ The following profiling was conducted on a machine with an Intel i9 CPU, 64GB of
 🌐 Internationalization & Localization
 - [ ] Multilingual document support
 - [ ] Language detection and tagging
+
+## Profiling (Initial Version)
+
+The following profiling was conducted on a machine with an Intel i9 CPU, 64GB of RAM, and an NVIDIA 3090 GPU. The `llm_service` was running in CPU mode.
+
+### Resource Usage
+
+| Service         | State  | CPU % (Peak) | Memory Usage (Peak) |
+| --------------- | ------ | ------------ | ------------------- |
+| **rag_api**     | Idle   | 0.41%        | 2.077 GiB           |
+|                 | Upload | 0.43%        | 2.113 GiB           |
+|                 | Query  | 0.40%        | 2.113 GiB           |
+| **vector_db**   | Idle   | 0.24%        | 122.3 MiB           |
+|                 | Upload | 0.38%        | 124.8 MiB           |
+|                 | Query  | 0.25%        | 123.2 MiB           |
+| **llm_service** | Idle   | 0.00%        | 12.94 MiB           |
+|                 | Upload | 0.00%        | 12.94 MiB           |
+|                 | Query  | **~100%**    | **3.998 GiB**       |
+
+### Estimated Minimum Hardware Requirements
+
+*   **RAM:** 8 GB
+*   **CPU:** 4-core
+*   **Storage:** 10 GB
+
+**Note:** The primary bottleneck is the `llm_service` during query operations. Using a supported GPU for the `llm_service` would significantly improve performance and reduce CPU load.

@@ -9,3 +9,5 @@ beautifulsoup4
 html2text
 tiktoken
 httpx
+typer
+requests
