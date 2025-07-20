@@ -1,4 +1,5 @@
 services:
+  # Base LLM service (CPU-only)
   llm_service:
     image: ollama/ollama:latest
     ports:
@@ -11,6 +12,29 @@ services:
         limits:
           memory: 4G
     entrypoint: ["/bin/bash", "/init.sh"]
+    profiles:
+      - cpu
+
+  # GPU-enabled LLM service
+  llm_service_gpu:
+    image: ollama/ollama:latest
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_models:/root/.ollama
+      - ./init.sh:/init.sh
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+        limits:
+          memory: 4G
+    entrypoint: ["/bin/bash", "/init.sh"]
+    profiles:
+      - gpu
 
   vector_db:
     image: qdrant/qdrant:latest
@@ -18,7 +42,11 @@ services:
       - "6333:6333"
     volumes:
       - qdrant_data:/qdrant/storage
+    profiles:
+      - cpu
+      - gpu
 
+  # Base RAG API service (CPU-only)
   rag_api:
     build: .
     ports:
@@ -29,6 +57,29 @@ services:
     environment:
       - OLLAMA_HOST=http://llm_service:11434
       - QDRANT_HOST=http://vector_db:6333
+    profiles:
+      - cpu
+
+  # GPU-enabled RAG API service
+  rag_api_gpu:
+    build: .
+    ports:
+      - "8000:8000"
+    depends_on:
+      - llm_service_gpu
+      - vector_db
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    environment:
+      - OLLAMA_HOST=http://llm_service_gpu:11434
+      - QDRANT_HOST=http://vector_db:6333
+    profiles:
+      - gpu
 
 volumes:
   ollama_models:
