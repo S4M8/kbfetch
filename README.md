@@ -16,7 +16,7 @@ To set up and run `kbfetch`, you need to have Docker and Docker Compose installe
 
 1.  **Clone the repository**:
     ```bash
-    git clone https://github.com/your-repo/kbfetch.git
+    git clone https://github.com/S4M8/kbfetch.git
     cd kbfetch
     ```
 
