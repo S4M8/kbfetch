@@ -1,13 +1,20 @@
 #!/usr/bin/env python
-import argparse
+import typer
 import requests
 import os
 import json
 import mimetypes
+from typing_extensions import Annotated
+
+app = typer.Typer()
 
 BASE_URL = os.environ.get("KBFETCH_BASE_URL", "http://localhost:8000")
 
-def upload_document(file_path: str):
+@app.command()
+def upload(file_path: Annotated[str, typer.Argument(help="Path to the document file to upload.")]):
+    """
+    Upload a document to the knowledge base.
+    """
     url = f"{BASE_URL}/upload"
     
     mime_type, _ = mimetypes.guess_type(file_path)
@@ -23,7 +30,11 @@ def upload_document(file_path: str):
         except requests.exceptions.RequestException as e:
             print(f"Error uploading document: {e}")
 
-def query_knowledge_base(query_text: str):
+@app.command()
+def query(query_text: Annotated[str, typer.Argument(help="The text query for the knowledge base.")]):
+    """
+    Query the knowledge base.
+    """
     url = f"{BASE_URL}/query"
     headers = {"Content-Type": "application/json"}
     try:
@@ -37,24 +48,5 @@ def query_knowledge_base(query_text: str):
     except requests.exceptions.RequestException as e:
         print(f"Error querying knowledge base: {e}")
 
-def main():
-    parser = argparse.ArgumentParser(description="kbfetch CLI tool for RAG application.")
-    subparsers = parser.add_subparsers(dest="command", help="Available commands")
-
-    upload_parser = subparsers.add_parser("upload", help="Upload a document to the knowledge base.")
-    upload_parser.add_argument("file_path", type=str, help="Path to the document file to upload.")
-    upload_parser.set_defaults(func=lambda args: upload_document(args.file_path))
-
-    query_parser = subparsers.add_parser("query", help="Query the knowledge base.")
-    query_parser.add_argument("query_text", type=str, nargs='+', help="The text query for the knowledge base.")
-    query_parser.set_defaults(func=lambda args: query_knowledge_base(" ".join(args.query_text)))
-
-    args = parser.parse_args()
-
-    if args.command:
-        args.func(args)
-    else:
-        parser.print_help()
-
 if __name__ == "__main__":
-    main()
+    app()
