@@ -16,7 +16,7 @@ To set up and run `kbfetch`, you need to have Docker and Docker Compose installe
 
 1.  **Clone the repository**:
     ```bash
-    git clone https://github.com/your-repo/kbfetch.git
+    git clone https://github.com/S4M8/kbfetch.git
     cd kbfetch
     ```
 
@@ -88,3 +88,52 @@ The following profiling was conducted on a machine with an Intel i9 CPU, 64GB of
 *   **Storage:** 10 GB
 
 **Note:** The primary bottleneck is the `llm_service` during query operations. Using a supported GPU for the `llm_service` would significantly improve performance and reduce CPU load.
+
+
+## Planned Features
+
+📄 Document Format Support
+- [] JSON parsing and embedding
+- [] YAML document support
+- [] PDF content extraction (including OCR capabilities)
+- [] Image processing and embedding (e.g., screenshots, scanned pages)
+- [] CSV and Excel document ingestion
+- [] XML document parsing
+- [] TOML config file support
+
+🔍 Search & Query Enhancements
+- [] Semantic and intent-aware search
+- [] Faceted filtering (type, tags, date, source, etc.)
+- [] Full-text OCR for scanned documents and image-based PDFs
+
+🧠 Metadata & Classification
+- [] Automatic metadata extraction (e.g., author, date, keywords)
+- [] Custom tagging system for documents
+- [] NLP-driven auto-classification into topics or categories
+
+🔗 UI, Workflow & Automation
+- [] Web-based dashboard for browsing and managing knowledge base entries
+- [] Rich document previews (syntax highlighting, PDF/image thumbnails, tree views)
+- [] Commenting and collaborative annotations
+- [] Bulk and recursive directory uploads
+- [] Export content or search results to PDF, DOCX, or HTML
+- [] Workflow automation (e.g., auto-tagging, alerts, custom triggers)
+
+🔐 Security & Access Control
+- [] Role-based access control
+- [] Document-level permissions
+- [] Audit logging and version history tracking for changes
+
+🔧 Integrations & Extensibility
+- [] API endpoints for external integration (e.g., Slack, GitHub, Zapier)
+- [] Webhooks and event triggers (e.g., on document addition/modification)
+- [] Pluggable embedding model support (e.g., OpenAI, Cohere, local models)
+
+📊 Analytics & Reporting
+- [] Usage and search analytics dashboard
+- [] Document type breakdown reports
+- [] Query success/failure rate tracking
+
+🌐 Internationalization & Localization
+- [] Multilingual document support
+- [] Language detection and tagging
