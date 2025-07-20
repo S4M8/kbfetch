@@ -1,3 +1,4 @@
+import re
 from pathlib import Path
 from typing import List
 import tiktoken
@@ -28,16 +29,20 @@ class DocumentProcessor:
         """Process document and return text chunks"""
         extension = Path(file_path).suffix.lower()
         parser = self.parsers.get(extension, self.process_text)
-        with open(file_path, 'r', encoding='utf-8') as f:
-            content = f.read()
-        return parser(content)
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+            return parser(content)
+        except FileNotFoundError:
+            return [f"Error: File not found at {file_path}"]
+        except Exception as e:
+            return [f"Error processing file {file_path}: {e}"]
 
     def process_markdown(self, content: str) -> List[str]:
-        # For markdown, we can split by headings and then chunk token-aware
         # This is a basic implementation, more advanced markdown parsers could be used
         chunks = []
         # Split by headings (e.g., #, ##, ###)
-        sections = content.split('\n#')
+        sections = re.split(r'\n#{1,6} ', content)
         for section in sections:
             if section.strip():
                 # Add the heading back if it was a heading split
@@ -47,13 +52,6 @@ class DocumentProcessor:
         return chunks
 
     def process_html(self, content: str) -> List[str]:
-        soup = BeautifulSoup(content, 'html.parser')
-        # Extract visible text
-        for script_or_style in soup(["script", "style"]):
-            script_or_style.extract()
-        text_content = soup.get_text(separator=' ')
-        
-        # Convert to markdown for better structured chunking
         h = html2text.HTML2Text()
         h.ignore_links = True
         h.ignore_images = True
@@ -67,3 +65,4 @@ class DocumentProcessor:
 
     def process_text(self, content: str) -> List[str]:
         return self._chunk_text_token_aware(content)
+

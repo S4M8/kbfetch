@@ -1,9 +1,13 @@
-from fastapi import FastAPI, UploadFile, File, Body
+from fastapi import FastAPI, UploadFile, File
+from pydantic import BaseModel
 from .rag import RAG
 import os
 
 app = FastAPI()
-rag = RAG(qdrant_host=os.environ.get("QDRANT_HOST", "localhost"))
+rag = RAG(qdrant_host=os.environ.get("QDRANT_HOST", "http://vector_db:6333"))
+
+class QueryRequest(BaseModel):
+    q: str
 
 @app.post("/upload")
 async def upload_document(file: UploadFile = File(...)):
@@ -15,6 +19,6 @@ async def upload_document(file: UploadFile = File(...)):
     return {"message": "Document uploaded successfully"}
 
 @app.post("/query")
-def query(q: str = Body(...)):
-    results = rag.query(q)
+async def query(request: QueryRequest):
+    results = await rag.query(request.q)
     return {"results": results}

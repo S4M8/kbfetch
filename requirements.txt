@@ -8,3 +8,4 @@ python-multipart
 beautifulsoup4
 html2text
 tiktoken
+httpx

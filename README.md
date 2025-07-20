@@ -5,9 +5,9 @@ Containerized RAG (Retrieval-Augmented Generation) Knowledge Base.
 ## Technologies Used
 
 *   **FastAPI**: A modern, fast (high-performance) web framework for building APIs with Python 3.7+ based on standard Python type hints.
-*   **Sentence Transformers**: A Python framework for state-of-the-art sentence, text, and image embeddings. Used here for generating embeddings from document chunks.
+*   **Sentence Transformers**: A Python framework for state-of-the-art sentence, text, and image embeddings. Specifically, `all-MiniLM-L6-v2` is used for generating embeddings from document chunks.
 *   **Qdrant**: A vector similarity search engine and vector database. It stores vector embeddings and provides an API for similarity search.
-*   **Ollama**: A tool for running large language models locally. Used here for the LLM service.
+*   **Ollama**: A tool for running large language models locally. `Phi-3` is used as the LLM for generating responses.
 *   **Docker & Docker Compose**: Used for containerizing the application components and orchestrating their deployment.
 
 ## Installation
@@ -29,7 +29,7 @@ To set up and run `kbfetch`, you need to have Docker and Docker Compose installe
     ```bash
     docker-compose up -d
     ```
-    This will start the `rag_api` (FastAPI application), `vector_db` (Qdrant), and `llm_service` (Ollama) containers.
+    This will start the `rag_api` (FastAPI application which now includes LLM generation), `vector_db` (Qdrant), and `llm_service` (Ollama) containers.
 
 ## Usage
 
@@ -62,3 +62,29 @@ Example:
 ```bash
 python kbfetch_cli.py query "What is kbfetch?"
 ```
+
+## Profiling (Initial Version)
+
+The following profiling was conducted on a machine with an Intel i9 CPU, 64GB of RAM, and an NVIDIA 3090 GPU. The `llm_service` was running in CPU mode.
+
+### Resource Usage
+
+| Service         | State  | CPU % (Peak) | Memory Usage (Peak) |
+| --------------- | ------ | ------------ | ------------------- |
+| **rag_api**     | Idle   | 0.41%        | 2.077 GiB           |
+|                 | Upload | 0.43%        | 2.113 GiB           |
+|                 | Query  | 0.40%        | 2.113 GiB           |
+| **vector_db**   | Idle   | 0.24%        | 122.3 MiB           |
+|                 | Upload | 0.38%        | 124.8 MiB           |
+|                 | Query  | 0.25%        | 123.2 MiB           |
+| **llm_service** | Idle   | 0.00%        | 12.94 MiB           |
+|                 | Upload | 0.00%        | 12.94 MiB           |
+|                 | Query  | **~100%**    | **3.998 GiB**       |
+
+### Estimated Minimum Hardware Requirements
+
+*   **RAM:** 8 GB
+*   **CPU:** 4-core
+*   **Storage:** 10 GB
+
+**Note:** The primary bottleneck is the `llm_service` during query operations. Using a supported GPU for the `llm_service` would significantly improve performance and reduce CPU load.
