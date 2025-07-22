@@ -46,11 +46,15 @@ services:
       - cpu
       - gpu
 
-  # Base RAG API service (CPU-only)
+  # RAG API service (CPU profile)
   rag_api:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
     ports:
-      - "8000:8000"
+      - "80:8000"
+    volumes:
+      - app_docs:/docs
     depends_on:
       - llm_service
       - vector_db
@@ -60,11 +64,15 @@ services:
     profiles:
       - cpu
 
-  # GPU-enabled RAG API service
+  # RAG API service (GPU profile)
   rag_api_gpu:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
     ports:
-      - "8000:8000"
+      - "80:8000"
+    volumes:
+      - app_docs:/docs
     depends_on:
       - llm_service_gpu
       - vector_db
@@ -84,3 +92,4 @@ services:
 volumes:
   ollama_models:
   qdrant_data:
+  app_docs:

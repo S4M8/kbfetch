@@ -41,12 +41,36 @@ class RAG:
             points.append(models.PointStruct(
                 id=str(uuid.uuid4()),
                 vector=embedding.tolist(),
-                payload={"text": chunk}
+                payload={"text": chunk, "file_name": os.path.basename(file_path)}
             ))
         
         self.qdrant_client.upsert(
             collection_name=self.collection_name,
             points=points
+        )
+
+    def list_documents(self):
+        points, _ = self.qdrant_client.scroll(
+            collection_name=self.collection_name,
+            limit=10000, # Assuming we won't have more than 10k docs for now
+            with_payload=["file_name"]
+        )
+        filenames = {point.payload['file_name'] for point in points}
+        return list(filenames)
+
+    def delete_document(self, file_name):
+        self.qdrant_client.delete(
+            collection_name=self.collection_name,
+            points_selector=models.FilterSelector(
+                filter=models.Filter(
+                    must=[
+                        models.FieldCondition(
+                            key="file_name",
+                            match=models.MatchValue(value=file_name),
+                        )
+                    ]
+                )
+            ),
         )
 
     async def query(self, query_text, n_results=2):
@@ -63,27 +87,24 @@ class RAG:
 
         async with httpx.AsyncClient() as client:
             try:
-                response = await client.post(
+                async with client.stream(
+                    "POST",
                     f"{self.ollama_host}/api/generate",
                     json={
                         "model": self.llm_model,
                         "prompt": prompt,
-                        "stream": False,
-                        "options": {
-                            "num_predict": 1000,
-                            "temperature": 0.1,
-                        },
+                        "stream": True,
                     },
                     timeout=60.0,
-                )
-                response.raise_for_status()
-                
-                result = response.json()
-                return result.get("response", "No response generated")
-                
+                ) as response:
+                    response.raise_for_status()
+                    async for chunk in response.aiter_bytes():
+                        # Ollama streams JSON objects separated by newlines
+                        if chunk:
+                            yield chunk
             except httpx.RequestError as e:
-                return f"Error communicating with Ollama service: {e}"
+                yield f"Error communicating with Ollama service: {e}"
             except httpx.HTTPStatusError as e:
-                return f"Ollama service returned an error: {e.response.text}"
+                yield f"Ollama service returned an error: {e.response.text}"
             except Exception as e:
-                return f"An unexpected error occurred during LLM generation: {e}"
+                yield f"An unexpected error occurred during LLM generation: {e}"

@@ -1,0 +1,20 @@
+# Git
+.git
+.gitignore
+.dockerignore
+
+# Node
+frontend/node_modules
+npm-debug.log
+
+# Python
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.venv
+venv
+
+# OS / Editor
+.DS_Store
+.vscode/

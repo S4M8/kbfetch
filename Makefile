@@ -17,21 +17,21 @@ help:
 auto:
 	@if command -v nvidia-smi >/dev/null 2>&1 && nvidia-smi >/dev/null 2>&1; then \
 		echo "🚀 GPU detected - starting with GPU acceleration"; \
-		docker-compose --profile gpu up -d; \
+		docker-compose --profile gpu up -d rag_api_gpu; \
 	else \
 		echo "💻 No GPU detected - starting with CPU only"; \
-		docker-compose --profile cpu up -d; \
+		docker-compose --profile cpu up -d rag_api; \
 	fi
 
 # Start with GPU
 gpu:
 	@echo "🚀 Starting with GPU acceleration"
-	docker-compose --profile gpu up -d
+	docker-compose --profile gpu up -d rag_api_gpu
 
 # Start with CPU only
 cpu:
 	@echo "💻 Starting with CPU only"
-	docker-compose --profile cpu up -d
+	docker-compose --profile cpu up -d rag_api
 
 # Build images
 build:
