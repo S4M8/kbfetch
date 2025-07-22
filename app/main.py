@@ -1,5 +1,5 @@
 from fastapi import FastAPI, UploadFile, File, HTTPException
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from .rag import RAG
@@ -31,8 +31,7 @@ async def upload_document(file: UploadFile = File(...)):
 
 @api_router.post("/query")
 async def query(request: QueryRequest):
-    results = await rag.query(request.q)
-    return {"results": results}
+    return StreamingResponse(rag.query(request.q), media_type="application/x-ndjson")
 
 @api_router.get("/documents")
 async def list_documents():

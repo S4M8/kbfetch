@@ -9,9 +9,9 @@ RUN npm run build
 # Stage 2: Build the Python backend
 FROM python:3.9-slim
 WORKDIR /app
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+COPY requirements.txt ./app/
 COPY ./app /app/app
+RUN pip install --no-cache-dir -r /app/requirements.txt
 COPY --from=builder /app/frontend/dist /app/static
 
 # Expose the port the app runs on

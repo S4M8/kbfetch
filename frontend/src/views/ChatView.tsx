@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { Box, TextField, Button, List, ListItem, ListItemText, Paper, Typography, CircularProgress } from '@mui/material';
-import axios from 'axios';
 
 export interface Message {
   sender: 'user' | 'bot';
@@ -10,30 +9,61 @@ export interface Message {
 interface ChatViewProps {
   messages: Message[];
   onNewMessage: (message: Message) => void;
+  onUpdateMessage: (index: number, newText: string) => void;
 }
 
-const ChatView: React.FC<ChatViewProps> = ({ messages, onNewMessage }) => {
+const ChatView: React.FC<ChatViewProps> = ({ messages, onNewMessage, onUpdateMessage }) => {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSend = async () => {
-    if (input.trim() === '') return;
+    if (input.trim() === '' || isLoading) return;
 
     const userMessage: Message = { sender: 'user', text: input };
     onNewMessage(userMessage);
     setInput('');
     setIsLoading(true);
 
+    // Add a placeholder for the bot's response
+    const botMessagePlaceholder: Message = { sender: 'bot', text: '' };
+    onNewMessage(botMessagePlaceholder);
+    const botMessageIndex = messages.length + 1;
+
     try {
-      const response = await axios.post('/api/query', { q: input });
-      const botMessage: Message = { sender: 'bot', text: response.data.results };
-      onNewMessage(botMessage);
+      const response = await fetch('/api/query', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ q: input }),
+      });
+
+      if (!response.body) return;
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let fullResponse = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        
+        const chunk = decoder.decode(value, { stream: true });
+        const jsonChunks = chunk.split('\n').filter(Boolean);
+
+        for (const jsonChunk of jsonChunks) {
+          try {
+            const parsed = JSON.parse(jsonChunk);
+            if (parsed.response) {
+              fullResponse += parsed.response;
+              onUpdateMessage(botMessageIndex, fullResponse);
+            }
+          } catch (e) {
+            console.error("Failed to parse stream chunk:", jsonChunk);
+          }
+        }
+      }
     } catch (error) {
-      const errorMessage: Message = {
-        sender: 'bot',
-        text: 'Error: Could not connect to the knowledge base.',
-      };
-      onNewMessage(errorMessage);
+      const errorText = 'Error: Could not connect to the knowledge base.';
+      onUpdateMessage(botMessageIndex, errorText);
     } finally {
       setIsLoading(false);
     }
@@ -44,10 +74,10 @@ const ChatView: React.FC<ChatViewProps> = ({ messages, onNewMessage }) => {
       sx={{
         width: '100%',
         maxWidth: '800px',
-        margin: '0 auto', // Center the component horizontally
+        margin: '0 auto',
         display: 'flex',
         flexDirection: 'column',
-        height: 'calc(100vh - 100px)', // Give it a defined height
+        height: 'calc(100vh - 100px)',
       }}
     >
       <Typography variant="h4" sx={{ mb: 2, textAlign: 'center' }}>KBfetch</Typography>
@@ -64,17 +94,17 @@ const ChatView: React.FC<ChatViewProps> = ({ messages, onNewMessage }) => {
                     sx={{
                       textAlign: message.sender === 'user' ? 'right' : 'left',
                       '& .MuiListItemText-primary': {
-                        whiteSpace: message.sender === 'bot' ? 'pre-wrap' : 'normal',
+                        whiteSpace: 'pre-wrap',
                       },
                     }}
                   />
                 </ListItem>
               ))}
-              {isLoading && (
-                <ListItem sx={{ justifyContent: 'flex-start' }}>
-                  <CircularProgress size={24} />
-                  <Typography sx={{ ml: 2 }}>Thinking...</Typography>
-                </ListItem>
+              {isLoading && messages[messages.length - 1]?.text === '' && (
+                 <ListItem sx={{ justifyContent: 'flex-start' }}>
+                    <CircularProgress size={24} />
+                    <Typography sx={{ ml: 2 }}>Thinking...</Typography>
+                  </ListItem>
               )}
             </List>
           </Paper>

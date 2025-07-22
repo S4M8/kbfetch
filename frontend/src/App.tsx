@@ -14,14 +14,22 @@ function App() {
     setMessages((prev) => [...prev, message]);
   };
 
+  const handleUpdateMessage = (index: number, newText: string) => {
+    setMessages(prev => 
+      prev.map((msg, i) => 
+        i === index ? { ...msg, text: newText } : msg
+      )
+    );
+  };
+
   const renderView = () => {
     switch (currentView) {
       case 'chat':
-        return <ChatView messages={messages} onNewMessage={handleNewMessage} />;
+        return <ChatView messages={messages} onNewMessage={handleNewMessage} onUpdateMessage={handleUpdateMessage} />;
       case 'documents':
         return <DocumentView />;
       default:
-        return <ChatView messages={messages} onNewMessage={handleNewMessage} />;
+        return <ChatView messages={messages} onNewMessage={handleNewMessage} onUpdateMessage={handleUpdateMessage} />;
     }
   };
 
