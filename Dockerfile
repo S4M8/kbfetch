@@ -1,23 +1,21 @@
-# Build Stage - Install dependencies and build tools
-FROM python:3.11-slim AS builder
+# Stage 1: Build the React frontend
+FROM node:18-alpine AS builder
+WORKDIR /app/frontend
+COPY frontend/package*.json ./
+RUN npm install
+COPY frontend/ .
+RUN npm run build
+
+# Stage 2: Build the Python backend
+FROM python:3.9-slim
 WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
+COPY ./app /app/app
+COPY --from=builder /app/frontend/dist /app/static
 
-# Runtime Stage - Minimal production image
-FROM python:3.11-slim AS production
-WORKDIR /tmp
-
-# Copy only necessary files from builder stage
-COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
-COPY --from=builder /usr/local/bin /usr/local/bin
-COPY app/main.py app/main.py
-COPY app/rag.py app/rag.py
-COPY app/document_processor.py app/document_processor.py
-
-# Create non-root user for security
-RUN useradd --create-home --shell /bin/bash rag_user
-USER rag_user
-
+# Expose the port the app runs on
 EXPOSE 8000
-CMD ["gunicorn", "-w", "4", "-k", "uvicorn.workers.UvicornWorker", "app.main:app", "--bind", "0.0.0.0:8000"]
+
+# Command to run the application
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]

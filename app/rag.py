@@ -41,12 +41,36 @@ class RAG:
             points.append(models.PointStruct(
                 id=str(uuid.uuid4()),
                 vector=embedding.tolist(),
-                payload={"text": chunk}
+                payload={"text": chunk, "file_name": os.path.basename(file_path)}
             ))
         
         self.qdrant_client.upsert(
             collection_name=self.collection_name,
             points=points
+        )
+
+    def list_documents(self):
+        points, _ = self.qdrant_client.scroll(
+            collection_name=self.collection_name,
+            limit=10000, # Assuming we won't have more than 10k docs for now
+            with_payload=["file_name"]
+        )
+        filenames = {point.payload['file_name'] for point in points}
+        return list(filenames)
+
+    def delete_document(self, file_name):
+        self.qdrant_client.delete(
+            collection_name=self.collection_name,
+            points_selector=models.FilterSelector(
+                filter=models.Filter(
+                    must=[
+                        models.FieldCondition(
+                            key="file_name",
+                            match=models.MatchValue(value=file_name),
+                        )
+                    ]
+                )
+            ),
         )
 
     async def query(self, query_text, n_results=2):
