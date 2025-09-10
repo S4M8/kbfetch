@@ -1,0 +1,9 @@
+- id: doc1
+  title: History of the Internet
+  content: The Internet originated from ARPANET in the late 1960s and became publicly accessible in the 1990s.
+- id: doc2
+  title: Basics of Machine Learning
+  content: Machine learning enables computers to learn from data patterns and make predictions without being explicitly programmed.
+- id: doc3
+  title: Introduction to Quantum Computing
+  content: Quantum computing leverages quantum bits to process information in ways that classical computers cannot.
